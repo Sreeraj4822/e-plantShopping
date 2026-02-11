@@ -1,55 +1,78 @@
-import React, { useState } from "react";
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { updateQuantity, removeItem } from "../CartSlice";
 
-function CartItem() {
-  const [quantity, setQuantity] = useState(1);
+const CartItem = ({ onContinueShopping }) => {
+  const cartItems = useSelector((state) => state.cart.items);
+  const dispatch = useDispatch();
 
-  const price = 15;
-  const total = quantity * price;
-
-  const addItem = () => {
-    setQuantity(quantity + 1);
+  const calculateTotalAmount = () => {
+    return cartItems.reduce((total, item) => {
+      return total + parseFloat(item.price.substring(1)) * item.quantity;
+    }, 0);
   };
 
-  const removeItem = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
+  const handleIncrement = (item) => {
+    dispatch(
+      updateQuantity({
+        id: item.id,
+        quantity: item.quantity + 1,
+      })
+    );
+  };
+
+  const handleDecrement = (item) => {
+    if (item.quantity > 1) {
+      dispatch(
+        updateQuantity({
+          id: item.id,
+          quantity: item.quantity - 1,
+        })
+      );
+    } else {
+      dispatch(removeItem(item.id));
     }
   };
 
-  const updateQuantity = (e) => {
-    setQuantity(Number(e.target.value));
+  const handleRemove = (id) => {
+    dispatch(removeItem(id));
+  };
+
+  const handleCheckoutShopping = () => {
+    alert("Coming Soon");
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Shopping Cart</h1>
+    <div>
+      <h2>Shopping Cart</h2>
 
-      <div
-        style={{
-          border: "1px solid #ccc",
-          padding: "20px",
-          width: "300px"
-        }}
-      >
-        <h3>Snake Plant</h3>
-        <p>Price: ${price}</p>
+      {cartItems.length === 0 && <p>Your cart is empty.</p>}
 
-        <p>
-          Quantity:
-          <button onClick={removeItem}>-</button>
-          <input
-            type="number"
-            value={quantity}
-            onChange={updateQuantity}
-            style={{ width: "50px", margin: "0 10px" }}
-          />
-          <button onClick={addItem}>+</button>
-        </p>
+      {cartItems.map((item) => (
+        <div key={item.id} style={{ border: "1px solid #ccc", padding: "10px", margin: "10px" }}>
+          <img src={item.image} alt={item.name} width="100" />
+          <h3>{item.name}</h3>
+          <p>Unit Price: {item.price}</p>
+          <p>Quantity: {item.quantity}</p>
+          <p>
+            Subtotal: $
+            {(
+              parseFloat(item.price.substring(1)) * item.quantity
+            ).toFixed(2)}
+          </p>
 
-        <p>Total: ${total}</p>
-      </div>
+          <button onClick={() => handleIncrement(item)}>+</button>
+          <button onClick={() => handleDecrement(item)}>-</button>
+          <button onClick={() => handleRemove(item.id)}>Delete</button>
+        </div>
+      ))}
+
+      <h3>Total Amount: ${calculateTotalAmount().toFixed(2)}</h3>
+
+      <button onClick={onContinueShopping}>Continue Shopping</button>
+      <button onClick={handleCheckoutShopping}>Checkout</button>
     </div>
   );
-}
+};
 
 export default CartItem;
